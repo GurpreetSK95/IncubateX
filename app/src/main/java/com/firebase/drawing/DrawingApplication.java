@@ -1,6 +1,8 @@
 package com.firebase.drawing;
 
 import android.app.Application;
+import android.content.Intent;
+import android.view.View;
 
 import com.firebase.client.Firebase;
 
@@ -18,4 +20,5 @@ public class DrawingApplication extends Application {
         //Firebase.getDefaultConfig().setLogLevel(Logger.Level.DEBUG);
         SyncedBoardManager.setContext(this);
     }
+
 }

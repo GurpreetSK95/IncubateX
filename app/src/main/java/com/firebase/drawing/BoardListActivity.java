@@ -187,4 +187,5 @@ public class BoardListActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
 }

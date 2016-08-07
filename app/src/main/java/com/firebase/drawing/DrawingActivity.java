@@ -1,15 +1,21 @@
 package com.firebase.drawing;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.DrawableUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 import android.support.v7.app.ActionBarActivity;
@@ -19,7 +25,10 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -32,13 +41,14 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
     public static final String TAG = "AndroidDrawing";
 
     private DrawingView mDrawingView;
-    private Firebase mFirebaseRef; // Firebase base URL
+    private Firebase mFirebaseRef;      // Firebase base URL
     private Firebase mMetadataRef;
     private Firebase mSegmentsRef;
     private ValueEventListener mConnectedListener;
     private String mBoardId;
     private int mBoardWidth;
     private int mBoardHeight;
+    View rootView;
 
     /**
      * Called when the activity is first created.
@@ -46,6 +56,9 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        rootView = findViewById(android.R.id.content);
+
         Intent intent = getIntent();
         final String url = intent.getStringExtra("FIREBASE_URL");
         final String boardId = intent.getStringExtra("BOARD_ID");
@@ -77,6 +90,7 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
                 // No-op
             }
         });
+
     }
 
     @Override
@@ -138,6 +152,22 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
             new ColorPickerDialog(this, this, 0xFFFF0000).show();
             return true;
         } else if (item.getItemId() == CLEAR_MENU_ID) {
+
+            new AlertDialog.Builder(DrawingActivity.this)
+                    .setTitle("Share before deleting?")
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            shareWhatsapp(rootView);
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // do nothing
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+
             mDrawingView.cleanup();
             mSegmentsRef.removeValue(new Firebase.CompletionListener() {
                 @Override
@@ -156,7 +186,11 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
             SyncedBoardManager.toggle(mFirebaseRef.child("boardsegments"), mBoardId);
             item.setChecked(SyncedBoardManager.isSynced(mBoardId));
             return true;
-        } else {
+        }else if (item.getItemId() == R.id.share) {
+            shareWhatsapp(rootView);
+            return true;
+        }
+        else {
             return super.onOptionsItemSelected(item);
         }
     }
@@ -214,4 +248,40 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
     public void colorChanged(int newColor) {
         mDrawingView.setColor(newColor);
     }
-}
+
+    public void shareWhatsapp(View view) {
+            try {
+                View screenView = view.getRootView();
+                screenView.setDrawingCacheEnabled(true);
+                Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
+                screenView.setDrawingCacheEnabled(false);
+                String root = Environment.getExternalStorageDirectory().toString();
+                File myDir = new File(root);
+                if (!myDir.exists()) {
+                    Boolean made = myDir.mkdirs();
+                    //Toast.makeText(this, "Directory made:"+made, Toast.LENGTH_SHORT).show();
+                }
+                File file = new File(myDir, "Hello");
+                try {
+                    FileOutputStream out = new FileOutputStream(file);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
+                    out.flush();
+                    out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Uri uri = Uri.fromFile(file);
+                Intent intent = new Intent();
+//                intent.setPackage("com.whatsapp");
+                intent.setAction(Intent.ACTION_SEND);
+                intent.setType("image/*");
+//                intent.putExtra(Intent.EXTRA_TEXT, "NewsMeme:Video News - the best way to stay updated\nGet today on Play Store https://goo.gl/gNcPbj ");
+                intent.putExtra(Intent.EXTRA_STREAM, uri);
+                startActivity(intent);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(DrawingActivity.this, "App not installed", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+

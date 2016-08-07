@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Firebase Doodling</string>
+    <string name="app_name">IncubateIND</string>
     <string name="title_activity_board_list">BoardListActivity</string>
 
     <string name="hello_world">Hello world!</string>
