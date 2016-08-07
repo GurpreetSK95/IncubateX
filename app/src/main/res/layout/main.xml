@@ -9,6 +9,12 @@
         android:layout_height="wrap_content"
         android:id="@+id/text_field"
         android:text="Hello World, DrawingActivity" />
-
+<!--
+    <SurfaceView
+        android:layout_width="250dp"
+        android:layout_height="150dp"
+        android:id="@+id/camSurface"
+        android:layout_gravity="bottom|end" />
+-->
 </FrameLayout>
 

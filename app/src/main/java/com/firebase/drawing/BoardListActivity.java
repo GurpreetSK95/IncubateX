@@ -57,9 +57,9 @@ public class BoardListActivity extends ActionBarActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean connected = (Boolean) dataSnapshot.getValue();
                 if (connected) {
-                    Toast.makeText(BoardListActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(BoardListActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(BoardListActivity.this, "Disconnected from Firebase", Toast.LENGTH_LONG).show();
+//                    Toast.makeText(BoardListActivity.this, "Disconnected from Firebase", Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -151,7 +151,7 @@ public class BoardListActivity extends ActionBarActivity {
 
     private void openBoard(String key) {
         Log.i(TAG, "Opening board "+key);
-        Toast.makeText(BoardListActivity.this, "Opening board: "+key, Toast.LENGTH_LONG).show();
+//        Toast.makeText(BoardListActivity.this, "Opening board: "+key, Toast.LENGTH_LONG).show();
         Intent intent = new Intent(this, DrawingActivity.class);
         intent.putExtra("FIREBASE_URL", FIREBASE_URL);
         intent.putExtra("BOARD_ID", key);

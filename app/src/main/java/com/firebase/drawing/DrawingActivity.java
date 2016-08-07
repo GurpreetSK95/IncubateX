@@ -7,19 +7,26 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DrawableUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import com.firebase.ChatActivity;
 import android.support.v7.app.ActionBarActivity;
 
+import com.firebase.ChatActivity;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
@@ -40,6 +47,12 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
     private static final int PIN_MENU_ID = CLEAR_MENU_ID + 1;
     public static final String TAG = "AndroidDrawing";
 
+    private SurfaceView surface_view;
+    private Camera mCamera;
+    SurfaceHolder.Callback sh_ob = null;
+    SurfaceHolder surface_holder        = null;
+    SurfaceHolder.Callback sh_callback  = null;
+
     private DrawingView mDrawingView;
     private Firebase mFirebaseRef;      // Firebase base URL
     private Firebase mMetadataRef;
@@ -59,6 +72,16 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
 
         rootView = findViewById(android.R.id.content);
 
+      /*  surface_view = new SurfaceView(getApplicationContext());
+        addContentView(surface_view, new ActionBar.LayoutParams(ActionBar.LayoutParams.FILL_PARENT, ActionBar.LayoutParams.FILL_PARENT));
+
+        if (surface_holder == null) {
+            surface_holder = surface_view.getHolder();
+        }
+
+        sh_callback = my_callback();
+        surface_holder.addCallback(sh_callback);
+*/
         Intent intent = getIntent();
         final String url = intent.getStringExtra("FIREBASE_URL");
         final String boardId = intent.getStringExtra("BOARD_ID");
@@ -93,6 +116,39 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
 
     }
 
+
+    SurfaceHolder.Callback my_callback() {
+        SurfaceHolder.Callback ob1 = new SurfaceHolder.Callback() {
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                mCamera.stopPreview();
+                mCamera.release();
+                mCamera = null;
+            }
+
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                mCamera = Camera.open();
+
+                try {
+                    mCamera.setPreviewDisplay(holder);
+                } catch (IOException exception) {
+                    mCamera.release();
+                    mCamera = null;
+                }
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                mCamera.startPreview();
+            }
+        };
+        return ob1;
+    }
+
+
+
     @Override
     public void onStart() {
         super.onStart();
@@ -102,9 +158,9 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean connected = (Boolean) dataSnapshot.getValue();
                 if (connected) {
-                    Toast.makeText(DrawingActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(DrawingActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(DrawingActivity.this, "Disconnected from Firebase", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(DrawingActivity.this, "Disconnected from Firebase", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -129,7 +185,7 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
+      super.onCreateOptionsMenu(menu);
         // getMenuInflater().inflate(R.menu.menu_drawing, menu);
 
         menu.add(0, COLOR_MENU_ID, 0, "Color").setShortcut('3', 'c').setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -137,8 +193,14 @@ public class DrawingActivity extends ActionBarActivity implements ColorPickerDia
         menu.add(0, PIN_MENU_ID, 3, "Keep in sync").setShortcut('6', 's').setIcon(android.R.drawable.ic_lock_lock)
                 .setCheckable(true).setChecked(SyncedBoardManager.isSynced(mBoardId));
 
+
         return true;
     }
+
+    public void ChatClicked(View view){
+        startActivity(new Intent(DrawingActivity.this, ChatActivity.class));
+    }
+
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
